@@ -512,14 +512,14 @@ class KeyboardActionstate extends State<KeyboardActions>
             child: SizedBox(
               width: double.maxFinite,
               key: _keyParent,
-              child: BottomAreaAvoider(
+              child: widget.autoScroll ? BottomAreaAvoider(
                 areaToAvoid: _offset,
                 duration: Duration(
                     milliseconds:
                         (_timeToDismiss.inMilliseconds * 1.8).toInt()),
                 autoScroll: widget.autoScroll,
                 child: widget.child,
-              ),
+              ) : Container(child: widget.child,),
             ),
           )
         : widget.child;
