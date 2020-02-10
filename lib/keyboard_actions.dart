@@ -110,7 +110,7 @@ class KeyboardActionstate extends State<KeyboardActions>
   }
 
   /// Set the config for the keyboard action bar.
-  void setConfig(KeyboardActionsConfig newConfig) {
+  setConfig(KeyboardActionsConfig newConfig) {
     clearConfig();
     config = newConfig;
     for (int i = 0; i < config.actions.length; i++) {
@@ -216,7 +216,7 @@ class KeyboardActionstate extends State<KeyboardActions>
         _overlayEntry.markNeedsBuild();
       }
 
-      if (_currentAction != null && _currentAction.footerBuilder != null) {
+      if (_currentAction.footerBuilder != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _updateOffset();
         });
@@ -285,12 +285,10 @@ class KeyboardActionstate extends State<KeyboardActions>
               ),
             Material(
               color: config.keyboardBarColor ?? Colors.grey[200],
-              elevation: 20,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  if (_currentAction.displayActionBar)
-                    _buildBar(_currentAction.displayArrows),
+                  if (_currentAction.displayActionBar) _buildBar(),
                   if (_currentFooter != null)
                     AnimatedContainer(
                       duration: _timeToDismiss,
@@ -414,7 +412,7 @@ class KeyboardActionstate extends State<KeyboardActions>
   }
 
   /// Build the keyboard action bar based on the current [config].
-  Widget _buildBar(bool displayArrows) {
+  Widget _buildBar() {
     return AnimatedCrossFade(
       duration: _timeToDismiss,
       crossFadeState:
@@ -422,70 +420,56 @@ class KeyboardActionstate extends State<KeyboardActions>
       firstChild: Container(
         height: _kBarSize,
         width: MediaQuery.of(context).size.width,
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: widget.config.keyboardSeparatorColor,
-              width: 1.0,
-            ),
-          ),
-        ),
         child: SafeArea(
           top: false,
           bottom: false,
           child: Row(
             children: [
-              config.nextFocus && displayArrows
+              config.nextFocus
                   ? IconButton(
                       icon: Icon(Icons.keyboard_arrow_up),
                       tooltip: 'Previous',
-                      iconSize: IconTheme.of(context).size,
                       color: IconTheme.of(context).color,
                       disabledColor: Theme.of(context).disabledColor,
                       onPressed: _previousIndex != null ? _onTapUp : null,
                     )
                   : const SizedBox.shrink(),
-              config.nextFocus && displayArrows
+              config.nextFocus
                   ? IconButton(
                       icon: Icon(Icons.keyboard_arrow_down),
                       tooltip: 'Next',
-                      iconSize: IconTheme.of(context).size,
                       color: IconTheme.of(context).color,
                       disabledColor: Theme.of(context).disabledColor,
                       onPressed: _nextIndex != null ? _onTapDown : null,
                     )
                   : const SizedBox.shrink(),
               Spacer(),
-              if (_currentAction?.displayDoneButton != null &&
-                  _currentAction.displayDoneButton &&
-                  (_currentAction.toolbarButtons == null ||
-                      _currentAction.toolbarButtons.isEmpty))
-                Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: InkWell(
-                    onTap: () {
-                      if (_currentAction?.onTapAction != null) {
-                        _currentAction.onTapAction();
-                      }
-                      _clearFocus();
-                    },
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-                      child: Text(
-                        "Done",
-                        style: TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w500,
-                        ),
+              _currentAction?.displayCloseWidget != null &&
+                      _currentAction.displayCloseWidget
+                  ? Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: InkWell(
+                        onTap: () {
+                          if (_currentAction?.onTapAction != null) {
+                            _currentAction.onTapAction();
+                          }
+                          _clearFocus();
+                        },
+                        child: _currentAction?.closeWidget ??
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 12.0),
+                              child: Text(
+                                "Done",
+                                style: TextStyle(
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
                       ),
-                    ),
-                  ),
-                ),
-              if (_currentAction?.toolbarButtons != null)
-                ..._currentAction.toolbarButtons
-                    .map((item) => item(_currentAction.focusNode))
-                    .toList()
+                    )
+                  : const SizedBox.shrink(),
             ],
           ),
         ),
@@ -512,14 +496,14 @@ class KeyboardActionstate extends State<KeyboardActions>
             child: SizedBox(
               width: double.maxFinite,
               key: _keyParent,
-              child: BottomAreaAvoider(
+              child: widget.autoScroll ?  BottomAreaAvoider(
                 areaToAvoid: _offset,
                 duration: Duration(
                     milliseconds:
                         (_timeToDismiss.inMilliseconds * 1.8).toInt()),
                 autoScroll: widget.autoScroll,
                 child: widget.child,
-              ),
+              ) : Container(child: widget.child,),
             ),
           )
         : widget.child;
